@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TransactionType {
+  STK_PUSH
+  C2B
+  B2C
+  B2B
+  REVERSAL
+}
+
+enum TransactionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  CANCELLED
+  REVERSED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+model Transaction {
+  id                 String            @id @default(cuid())
+  checkoutRequestId  String?           @unique
+  merchantRequestId  String?
+  receiptNumber      String?           @unique
+  conversationId     String?           @unique
+  originatorId       String?
+  type               TransactionType
+  status             TransactionStatus @default(PENDING)
+  amount             Decimal           @db.Decimal(18, 2)
+  phoneNumber        String?
+  accountReference   String?
+  transactionDesc    String?
+  resultCode         Int?
+  resultDesc         String?
+  metadata           Json?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  webhookLogs        WebhookLog[]
+
+  @@index([status, createdAt])
+  @@index([type, createdAt])
+}
+
+model Invoice {
+  id              String        @id @default(cuid())
+  externalInvoiceId String?     @unique
+  invoiceNumber   String        @unique
+  customerName    String
+  customerNumber  String
+  amount          Decimal       @db.Decimal(18, 2)
+  dueDate         DateTime
+  status          InvoiceStatus @default(DRAFT)
+  description     String?
+  billReference   String?
+  reconciliation  Json?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([status, dueDate])
+}
+
+model AccountBalanceLog {
+  id              String   @id @default(cuid())
+  balance         Decimal  @db.Decimal(18, 2)
+  workingBalance  Decimal? @db.Decimal(18, 2)
+  utilityAccountAvailableFunds Decimal? @db.Decimal(18, 2)
+  resultCode      Int?
+  resultDesc      String?
+  rawResponse     Json?
+  queriedAt       DateTime @default(now())
+
+  @@index([queriedAt])
+}
+
+model WebhookLog {
+  id             String      @id @default(cuid())
+  source         String
+  eventType      String
+  signatureValid Boolean     @default(false)
+  payload        Json
+  headers        Json?
+  processed      Boolean     @default(false)
+  processingError String?
+  transactionId  String?
+  transaction    Transaction? @relation(fields: [transactionId], references: [id])
+  receivedAt     DateTime    @default(now())
+
+  @@index([source, receivedAt])
+}

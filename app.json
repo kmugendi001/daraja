@@ -1,0 +1,24 @@
+{
+  "name": "Daraja Production Engine",
+  "description": "Safaricom Daraja Express and React application",
+  "repository": "https://github.com/",
+  "success_url": "/",
+  "addons": [
+    "heroku-postgresql",
+    "heroku-redis"
+  ],
+  "env": {
+    "NODE_ENV": "production",
+    "DARAJA_CALLBACK_URL": {
+      "description": "Public HTTPS STK callback URL; set this after Heroku creates the app",
+      "required": false
+    },
+    "DARAJA_CONSUMER_KEY": { "required": true },
+    "DARAJA_CONSUMER_SECRET": { "required": true },
+    "DARAJA_SHORTCODE": { "required": true },
+    "DARAJA_PASSKEY": { "required": true },
+    "ADMIN_API_TOKEN": { "required": true },
+    "AUDITOR_API_TOKEN": { "required": true }
+  },
+  "buildpacks": [{ "url": "heroku/nodejs" }]
+}
