@@ -58,18 +58,23 @@ app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
   });
 });
 
-const server = app.listen(env.PORT, () => {
-  console.log(`Daraja engine listening on port ${env.PORT}`);
-});
+export { app };
+export default app;
 
-async function shutdown() {
-  server.close(async () => {
-    await callbacks.worker.close();
-    await callbacks.queue.close();
-    await callbacks.connection.quit();
-    await prisma.$disconnect();
-    process.exit(0);
+if (!process.env.VERCEL) {
+  const server = app.listen(env.PORT, () => {
+    console.log(`Daraja engine listening on port ${env.PORT}`);
   });
+
+  async function shutdown() {
+    server.close(async () => {
+      await callbacks.worker.close();
+      await callbacks.queue.close();
+      await callbacks.connection.quit();
+      await prisma.$disconnect();
+      process.exit(0);
+    });
+  }
+  process.on('SIGTERM', shutdown);
+  process.on('SIGINT', shutdown);
 }
-process.on('SIGTERM', shutdown);
-process.on('SIGINT', shutdown);

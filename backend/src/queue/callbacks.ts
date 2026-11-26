@@ -4,6 +4,14 @@ import { PrismaClient } from '@prisma/client';
 import { env } from '../config/env.js';
 
 export function createCallbackQueue(prisma: PrismaClient) {
+  if (process.env.VERCEL) {
+    return {
+      queue: { add: async () => undefined, close: async () => undefined },
+      worker: { close: async () => undefined },
+      connection: { quit: async () => undefined }
+    };
+  }
+
   const connection = new Redis(env.REDIS_URL, { maxRetriesPerRequest: null });
   const queue = new Queue('daraja-callbacks', { connection });
 
